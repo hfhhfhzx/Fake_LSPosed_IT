@@ -30,3 +30,19 @@ jobs:
         with:
           name: LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
           path: Modules/
+      - name:Send to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚀 New Release Available!
+            
+            📦 Project: LSPosed-Fake
+            🏷️ Version: v1.9.2-it-${{ steps.get_version.outputs.VERSION }}
+            📅 Build Date: ${{ github.event.head_commit.timestamp }}
+            
+            🔗 Download: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            Commit: ${{ github.event.head_commit.message }}
+          document: LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
