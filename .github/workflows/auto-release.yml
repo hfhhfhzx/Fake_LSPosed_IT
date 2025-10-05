@@ -20,6 +20,11 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Using version: $VERSION"
       
+      - name: Set file timestamps
+        run: |
+          cd Modules
+          find . -exec touch -t 198002010000.00 {} \;
+      
       - name: Upload Modules archive
         uses: actions/upload-artifact@v4
         with:
