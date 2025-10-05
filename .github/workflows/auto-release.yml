@@ -1,0 +1,25 @@
+name: Auto Zip and Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  ZipAndRelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Zip Modules contents
+        run: |
+          cd Modules
+          zip -r ../Modules.zip *
+
+      - name: Upload Modules archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules-package
+          path: Modules.zip
