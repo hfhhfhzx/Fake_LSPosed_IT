@@ -13,13 +13,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Zip Modules contents
+      - name: Read version from version.txt
+        id: get_version
         run: |
-          cd Modules
-          zip -r ../Modules.zip *
-
+          VERSION=$(cat version.txt | tr -d '[:space:]')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
+      
       - name: Upload Modules archive
         uses: actions/upload-artifact@v4
         with:
-          name: modules-package
-          path: Modules.zip
+          name: LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
+          path: Modules/

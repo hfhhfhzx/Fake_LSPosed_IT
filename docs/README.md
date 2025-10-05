@@ -1,6 +1,6 @@
 # Fake_LSPosed_IT
 
-[![Channel](https://img.shields.io/badge/Join-Telegram-blue.svg?logo=telegram)](https://t.me/LSPosed)
+[![Channel](https://img.shields.io/badge/Join-Telegram-blue.svg?logo=telegram)](https://t.me/https://t.me/hfhhfhzxroompd)
 
 一个假的LSPosed IT项目。仅供娱乐！
 
