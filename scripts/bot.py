@@ -76,17 +76,20 @@ async def main():
         print("[-] No files to upload")
         exit(1)
     print("[+] Logging in Telegram with bot")
-    script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    session_dir = os.path.join(script_dir, "ksubot")
-    async with await TelegramClient(session=session_dir, api_id=API_ID, api_hash=API_HASH).start(bot_token=BOT_TOKEN) as bot:
+    
+    # 直接使用 bot token 登录，避免交互式输入
+    async with TelegramClient(None, API_ID, API_HASH) as client:
+        await client.start(bot_token=BOT_TOKEN)
+        print("[+] Bot logged in successfully")
+        
         caption = [""] * len(files)
         caption[-1] = get_caption()
         print("[+] Caption: ")
         print("---")
         print(caption)
         print("---")
-        print("[+] Sending")
-        await bot.send_file(entity=CHAT_ID, file=files, caption=caption, parse_mode="markdown")
+        print("[+] Sending files to Telegram")
+        await client.send_file(entity=CHAT_ID, file=files, caption=caption, parse_mode="markdown")
         print("[+] Done!")
 
 if __name__ == "__main__":
@@ -94,3 +97,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"[-] An error occurred: {e}")
+        exit(1)
