@@ -37,17 +37,6 @@ def get_caption():
         return COMMIT_URL
     return msg
 
-def check_environ():
-    if not BOT_TOKEN:
-        print("[-] Invalid BOT_TOKEN")
-        exit(1)
-    if not CHAT_ID:
-        print("[-] Invalid CHAT_ID")
-        exit(1)
-    if not BOT_SESSION:
-        print("[-] Invalid BOT_SESSION")
-        exit(1)
-
 async def main():
     print("[+] Uploading to telegram")
     check_environ()
