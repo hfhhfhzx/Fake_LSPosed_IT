@@ -13,7 +13,6 @@ COMMIT_URL = os.environ.get("COMMIT_URL")
 COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
 RUN_URL = os.environ.get("RUN_URL")
 TITLE = os.environ.get("TITLE")
-VERSION = os.environ.get("VERSION")
 
 BOT_SESSION = os.environ.get("BOT_SESSION")
 
@@ -30,7 +29,6 @@ MSG_TEMPLATE = """
 def get_caption():
     msg = MSG_TEMPLATE.format(
         title=TITLE,
-        version=VERSION,
         commit_message=COMMIT_MESSAGE,
         commit_url=COMMIT_URL,
         run_url=RUN_URL,
@@ -46,8 +44,8 @@ def check_environ():
     if not CHAT_ID:
         print("[-] Invalid CHAT_ID")
         exit(1)
-    if not BOT_CI_SESSION:
-        print("[-] Invalid BOT_CI_SESSION")
+    if not BOT_SESSION:
+        print("[-] Invalid BOT_SESSION")
         exit(1)
 
 async def main():
@@ -62,7 +60,7 @@ async def main():
         
     print("[+] Using pre-authenticated session")
     
-    session = StringSession(BOT_CI_SESSION)
+    session = StringSession(BOT_SESSION)
     
     async with TelegramClient(session, API_ID, API_HASH) as client:
         print("[+] Client initialized with pre-authenticated session")
