@@ -1,74 +1,43 @@
+from telethon import TelegramClient, sessions
 import asyncio
 import os
 import sys
-from telethon import TelegramClient
-from telethon.sessions import StringSession
 
-API_ID = 2040
-API_HASH = "b18441a1ff607e10a989891a5462e627"
-
+# --- Environment Variables ---
+API_ID = 611335
+API_HASH = "d524b414d21f4d37f08684c1df41ac9c"
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
-COMMIT_URL = os.environ.get("COMMIT_URL")
-COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
-RUN_URL = os.environ.get("RUN_URL")
-TITLE = os.environ.get("TITLE")
-
+CHAT_ID = int(os.environ.get("CHAT_ID"))
 BOT_SESSION = os.environ.get("BOT_SESSION")
 
-MSG_TEMPLATE = """
-**{title}**
+async def send_telegram_files(files):
+    """
+    Connects to Telegram and sends the specified files as a group message.
+    """
+    session = sessions.StringSession(BOT_SESSION)
 
-```
-{commit_message}
-```
-[Commit]({commit_url})
-[Workflow run]({run_url})
-""".strip()
+    async with TelegramClient(session, api_id=API_ID, api_hash=API_HASH) as client:
+        # Start the client with the bot token
+        await client.start(bot_token=BOT_TOKEN)
 
-def get_caption():
-    msg = MSG_TEMPLATE.format(
-        title=TITLE,
-        commit_message=COMMIT_MESSAGE,
-        commit_url=COMMIT_URL,
-        run_url=RUN_URL,
-    )
-    if len(msg) > 1024:
-        return COMMIT_URL
-    return msg
-
-async def main():
-    print("[+] Uploading to telegram")
-    files = sys.argv[1:]
-    print("[+] Files:", files)
-    
-    if len(files) <= 0:
-        print("[-] No files to upload")
-        exit(1)
-        
-    print("[+] Using pre-authenticated session")
-    
-    session = StringSession(BOT_SESSION)
-    
-    async with TelegramClient(session, API_ID, API_HASH) as client:
-        print("[+] Client initialized with pre-authenticated session")
-        
-        caption = [""] * len(files)
-        caption[-1] = get_caption()
-        print("[+] Caption prepared")
-        
-        print("[+] Sending files to Telegram...")
+        print("[+] Sending files as a group...")
+        # Send the files together as an album/group
         await client.send_file(
-            entity=int(CHAT_ID),
+            entity=CHAT_ID,
             file=files,
-            caption=caption,
-            parse_mode="markdown"
         )
-        print("[+] Files sent successfully!")
+        print("[+] Files sent successfully.")
 
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except Exception as e:
-        print(f"[-] An error occurred: {e}")
-        exit(1)
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        # Get all file paths from command-line arguments
+        apk_files = sys.argv[1:]
+        print(f"[+] Found files to upload: {apk_files}")
+        try:
+            # Run the asynchronous function
+            asyncio.run(send_telegram_files(apk_files))
+        except Exception as e:
+            print(f"[-] An error occurred: {e}")
+    else:
+        print("[-] No file paths provided as arguments.")
