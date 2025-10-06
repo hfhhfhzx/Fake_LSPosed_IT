@@ -45,7 +45,7 @@ jobs:
           COMMIT_URL: ${{ github.event.head_commit.url }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TITLE: New push to github!
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          BOT_SESSION: ${{ secrets.BOT_SESSION }}
         run: |
-            pip3 install requests
+            pip3 install telethon
             python3 $GITHUB_WORKSPACE/scripts/bot.py LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip

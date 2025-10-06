@@ -1,68 +1,88 @@
+import asyncio
 import os
 import sys
-import requests
+from telethon import TelegramClient
+from telethon.sessions import StringSession
 
-def upload_files():
-    BOT_TOKEN = os.environ.get("BOT_TOKEN")
-    CHAT_ID = os.environ.get("CHAT_ID")
-    
-    if not BOT_TOKEN or not CHAT_ID:
-        print("[-] Missing BOT_TOKEN or CHAT_ID")
-        return False
-        
+API_ID = 2040
+API_HASH = "b18441a1ff607e10a989891a5462e627"
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
+COMMIT_URL = os.environ.get("COMMIT_URL")
+COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
+RUN_URL = os.environ.get("RUN_URL")
+TITLE = os.environ.get("TITLE")
+VERSION = os.environ.get("VERSION")
+
+BOT_SESSION = os.environ.get("BOT_SESSION")
+
+MSG_TEMPLATE = """
+**{title}**
+
+```
+{commit_message}
+```
+[Commit]({commit_url})
+[Workflow run]({run_url})
+""".strip()
+
+def get_caption():
+    msg = MSG_TEMPLATE.format(
+        title=TITLE,
+        version=VERSION,
+        commit_message=COMMIT_MESSAGE,
+        commit_url=COMMIT_URL,
+        run_url=RUN_URL,
+    )
+    if len(msg) > 1024:
+        return COMMIT_URL
+    return msg
+
+def check_environ():
+    if not BOT_TOKEN:
+        print("[-] Invalid BOT_TOKEN")
+        exit(1)
+    if not CHAT_ID:
+        print("[-] Invalid CHAT_ID")
+        exit(1)
+    if not BOT_CI_SESSION:
+        print("[-] Invalid BOT_CI_SESSION")
+        exit(1)
+
+async def main():
+    print("[+] Uploading to telegram")
+    check_environ()
     files = sys.argv[1:]
-    if not files:
+    print("[+] Files:", files)
+    
+    if len(files) <= 0:
         print("[-] No files to upload")
-        return False
+        exit(1)
         
-    print(f"[+] Uploading {len(files)} files to Telegram")
+    print("[+] Using pre-authenticated session")
     
-    # 先发送文本消息
-    commit_message = os.environ.get("COMMIT_MESSAGE", "Build completed")
-    commit_url = os.environ.get("COMMIT_URL", "")
-    run_url = os.environ.get("RUN_URL", "")
-    version = os.environ.get("VERSION", "")
-    title = os.environ.get("TITLE", "Build")
+    session = StringSession(BOT_CI_SESSION)
     
-    caption = f"**{title}**\n#ci_{version}\n```{commit_message}```\n"
-    if commit_url:
-        caption += f"[Commit]({commit_url})\n"
-    if run_url:
-        caption += f"[Workflow run]({run_url})"
-    
-    # 逐个发送文件
-    for file_path in files:
-        if not os.path.exists(file_path):
-            print(f"[-] File not found: {file_path}")
-            continue
-            
-        print(f"[+] Uploading: {file_path}")
+    async with TelegramClient(session, API_ID, API_HASH) as client:
+        print("[+] Client initialized with pre-authenticated session")
         
-        try:
-            with open(file_path, 'rb') as file:
-                # 使用 Telegram Bot API 发送文档
-                response = requests.post(
-                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
-                    data={
-                        'chat_id': CHAT_ID,
-                        'caption': caption if file_path == files[-1] else "",  # 只在最后一个文件添加标题
-                        'parse_mode': 'Markdown'
-                    },
-                    files={'document': (os.path.basename(file_path), file)},
-                    timeout=60
-                )
-                
-                if response.status_code == 200:
-                    print(f"[+] Successfully uploaded: {file_path}")
-                else:
-                    print(f"[-] Failed to upload {file_path}: {response.text}")
-                    
-        except Exception as e:
-            print(f"[-] Error uploading {file_path}: {e}")
-            return False
-    
-    return True
+        caption = [""] * len(files)
+        caption[-1] = get_caption()
+        print("[+] Caption prepared")
+        
+        print("[+] Sending files to Telegram...")
+        await client.send_file(
+            entity=int(CHAT_ID),
+            file=files,
+            caption=caption,
+            parse_mode="markdown"
+        )
+        print("[+] Files sent successfully!")
 
 if __name__ == "__main__":
-    success = upload_files()
-    sys.exit(0 if success else 1)
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        print(f"[-] An error occurred: {e}")
+        exit(1)
