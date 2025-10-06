@@ -47,10 +47,5 @@ jobs:
           TITLE: New push to github!
           VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
-          if [ ! -z "$BOT_TOKEN" ]; then
             pip3 install telethon
-            
             python3 $GITHUB_WORKSPACE/scripts/bot.py LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
-          else
-            echo "BOT_TOKEN not set, skipping Telegram upload"
-          fi
