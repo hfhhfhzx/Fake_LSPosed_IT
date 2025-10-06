@@ -47,5 +47,5 @@ jobs:
           TITLE: New push to github!
           VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
-            pip3 install telethon
+            pip3 install requests
             python3 $GITHUB_WORKSPACE/scripts/bot.py LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip

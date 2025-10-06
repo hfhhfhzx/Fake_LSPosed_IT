@@ -1,100 +1,68 @@
 import os
 import sys
-from telethon.sync import TelegramClient
-from telethon.sessions import MemorySession
+import requests
 
-API_ID = 2040
-API_HASH = "b18441a1ff607e10a989891a5462e627"
-
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
-COMMIT_URL = os.environ.get("COMMIT_URL")
-COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
-RUN_URL = os.environ.get("RUN_URL")
-TITLE = os.environ.get("TITLE")
-VERSION = os.environ.get("VERSION")
-MSG_TEMPLATE = """
-**{title}**
-#ci_{version}
-```
-{commit_message}
-```
-[Commit]({commit_url})
-[Workflow run]({run_url})
-""".strip()
-
-
-def get_caption():
-    msg = MSG_TEMPLATE.format(
-        title=TITLE,
-        version=VERSION,
-        commit_message=COMMIT_MESSAGE,
-        commit_url=COMMIT_URL,
-        run_url=RUN_URL,
-    )
-    if len(msg) > 1024:
-        return COMMIT_URL
-    return msg
-
-
-def check_environ():
-    if not BOT_TOKEN:
-        print("[-] Invalid BOT_TOKEN")
-        exit(1)
-    if not CHAT_ID:
-        print("[-] Invalid CHAT_ID")
-        exit(1)
-    if not COMMIT_URL:
-        print("[-] Invalid COMMIT_URL")
-        exit(1)
-    if not COMMIT_MESSAGE:
-        print("[-] Invalid COMMIT_MESSAGE")
-        exit(1)
-    if not RUN_URL:
-        print("[-] Invalid RUN_URL")
-        exit(1)
-    if not TITLE:
-        print("[-] Invalid TITLE")
-        exit(1)
-    if not VERSION:
-        print("[-] Invalid VERSION")
-        exit(1)
-
-
-def main():
-    print("[+] Uploading to telegram")
-    check_environ()
+def upload_files():
+    BOT_TOKEN = os.environ.get("BOT_TOKEN")
+    CHAT_ID = os.environ.get("CHAT_ID")
+    
+    if not BOT_TOKEN or not CHAT_ID:
+        print("[-] Missing BOT_TOKEN or CHAT_ID")
+        return False
+        
     files = sys.argv[1:]
-    print("[+] Files:", files)
-    
-    if len(files) <= 0:
+    if not files:
         print("[-] No files to upload")
-        exit(1)
+        return False
         
-    print("[+] Logging in Telegram with bot token")
+    print(f"[+] Uploading {len(files)} files to Telegram")
     
-    # 使用同步客户端和 MemorySession
-    with TelegramClient(MemorySession(), API_ID, API_HASH) as client:
-        client.start(bot_token=BOT_TOKEN)
-        print("[+] Bot logged in successfully")
+    # 先发送文本消息
+    commit_message = os.environ.get("COMMIT_MESSAGE", "Build completed")
+    commit_url = os.environ.get("COMMIT_URL", "")
+    run_url = os.environ.get("RUN_URL", "")
+    version = os.environ.get("VERSION", "")
+    title = os.environ.get("TITLE", "Build")
+    
+    caption = f"**{title}**\n#ci_{version}\n```{commit_message}```\n"
+    if commit_url:
+        caption += f"[Commit]({commit_url})\n"
+    if run_url:
+        caption += f"[Workflow run]({run_url})"
+    
+    # 逐个发送文件
+    for file_path in files:
+        if not os.path.exists(file_path):
+            print(f"[-] File not found: {file_path}")
+            continue
+            
+        print(f"[+] Uploading: {file_path}")
         
-        # 验证连接
-        me = client.get_me()
-        print(f"[+] Logged in as: {me.username}")
-        
-        caption = [""] * len(files)
-        caption[-1] = get_caption()
-        print("[+] Caption prepared")
-        print("[+] Sending files to Telegram...")
-        
-        # 发送文件
-        client.send_file(
-            entity=int(CHAT_ID), 
-            file=files, 
-            caption=caption, 
-            parse_mode="markdown"
-        )
-        print("[+] Files sent successfully!")
+        try:
+            with open(file_path, 'rb') as file:
+                # 使用 Telegram Bot API 发送文档
+                response = requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
+                    data={
+                        'chat_id': CHAT_ID,
+                        'caption': caption if file_path == files[-1] else "",  # 只在最后一个文件添加标题
+                        'parse_mode': 'Markdown'
+                    },
+                    files={'document': (os.path.basename(file_path), file)},
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    print(f"[+] Successfully uploaded: {file_path}")
+                else:
+                    print(f"[-] Failed to upload {file_path}: {response.text}")
+                    
+        except Exception as e:
+            print(f"[-] Error uploading {file_path}: {e}")
+            return False
+    
+    return True
 
 if __name__ == "__main__":
-    main()
+    success = upload_files()
+    sys.exit(0 if success else 1)
