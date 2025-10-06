@@ -39,7 +39,6 @@ def get_caption():
 
 async def main():
     print("[+] Uploading to telegram")
-    check_environ()
     files = sys.argv[1:]
     print("[+] Files:", files)
     
