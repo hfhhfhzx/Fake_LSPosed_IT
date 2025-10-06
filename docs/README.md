@@ -1,10 +1,12 @@
-# Fake_LSPosed_IT
+# Fake LSPosed IT
 
 [![Channel](https://img.shields.io/badge/Join-Telegram-blue.svg?logo=telegram)](https://t.me/hfhhfhzxroompd)
 
 一个假的LSPosed IT项目。仅供娱乐！
 
 # 许可证
+
+Fake LSPosed IT目前基于Apache 2.0协议开源，但不保证未来依然继续遵循此协议或开源，有权更改开源协议或开源状态。
 
 ```
 Copyright 2025 hfhhfhzx

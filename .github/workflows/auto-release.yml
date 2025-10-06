@@ -24,25 +24,33 @@ jobs:
         run: |
           cd Modules
           find . -exec touch -t 198002010000.00 {} \;
+          
+      - name: Zip Modules contents
+        run: |
+          cd Modules
+          zip -r ../LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip *
       
       - name: Upload Modules archive
         uses: actions/upload-artifact@v4
         with:
           name: LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
           path: Modules/
-      - name:Send to Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            🚀 New Release Available!
+      
+      - name: Upload to telegram
+        if: github.event_name != 'pull_request'
+        env:
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: New push to github!
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+            pip3 install telethon
             
-            📦 Project: LSPosed-Fake
-            🏷️ Version: v1.9.2-it-${{ steps.get_version.outputs.VERSION }}
-            📅 Build Date: ${{ github.event.head_commit.timestamp }}
-            
-            🔗 Download: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            
-            Commit: ${{ github.event.head_commit.message }}
-          document: LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
+            python3 $GITHUB_WORKSPACE/scripts/bot.py LSPosed-v1.9.2-it-${{ steps.get_version.outputs.VERSION }}-release.zip
+          else
+            echo "BOT_TOKEN not set, skipping Telegram upload"
+          fi
