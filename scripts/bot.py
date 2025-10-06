@@ -1,7 +1,7 @@
-import asyncio
 import os
 import sys
-from telethon import TelegramClient
+from telethon.sync import TelegramClient
+from telethon.sessions import MemorySession
 
 API_ID = 2040
 API_HASH = "b18441a1ff607e10a989891a5462e627"
@@ -15,7 +15,7 @@ TITLE = os.environ.get("TITLE")
 VERSION = os.environ.get("VERSION")
 MSG_TEMPLATE = """
 **{title}**
-
+#ci_{version}
 ```
 {commit_message}
 ```
@@ -38,63 +38,63 @@ def get_caption():
 
 
 def check_environ():
-    global CHAT_ID
-    if BOT_TOKEN is None:
+    if not BOT_TOKEN:
         print("[-] Invalid BOT_TOKEN")
         exit(1)
-    if CHAT_ID is None:
+    if not CHAT_ID:
         print("[-] Invalid CHAT_ID")
         exit(1)
-    else:
-        try:
-            CHAT_ID = int(CHAT_ID)
-        except:
-            pass
-    if COMMIT_URL is None:
+    if not COMMIT_URL:
         print("[-] Invalid COMMIT_URL")
         exit(1)
-    if COMMIT_MESSAGE is None:
+    if not COMMIT_MESSAGE:
         print("[-] Invalid COMMIT_MESSAGE")
         exit(1)
-    if RUN_URL is None:
+    if not RUN_URL:
         print("[-] Invalid RUN_URL")
         exit(1)
-    if TITLE is None:
+    if not TITLE:
         print("[-] Invalid TITLE")
         exit(1)
-    if VERSION is None:
+    if not VERSION:
         print("[-] Invalid VERSION")
         exit(1)
 
 
-async def main():
+def main():
     print("[+] Uploading to telegram")
     check_environ()
     files = sys.argv[1:]
     print("[+] Files:", files)
+    
     if len(files) <= 0:
         print("[-] No files to upload")
         exit(1)
-    print("[+] Logging in Telegram with bot")
+        
+    print("[+] Logging in Telegram with bot token")
     
-    # 直接使用 bot token 登录，避免交互式输入
-    async with TelegramClient(None, API_ID, API_HASH) as client:
-        await client.start(bot_token=BOT_TOKEN)
+    # 使用同步客户端和 MemorySession
+    with TelegramClient(MemorySession(), API_ID, API_HASH) as client:
+        client.start(bot_token=BOT_TOKEN)
         print("[+] Bot logged in successfully")
+        
+        # 验证连接
+        me = client.get_me()
+        print(f"[+] Logged in as: {me.username}")
         
         caption = [""] * len(files)
         caption[-1] = get_caption()
-        print("[+] Caption: ")
-        print("---")
-        print(caption)
-        print("---")
-        print("[+] Sending files to Telegram")
-        await client.send_file(entity=CHAT_ID, file=files, caption=caption, parse_mode="markdown")
-        print("[+] Done!")
+        print("[+] Caption prepared")
+        print("[+] Sending files to Telegram...")
+        
+        # 发送文件
+        client.send_file(
+            entity=int(CHAT_ID), 
+            file=files, 
+            caption=caption, 
+            parse_mode="markdown"
+        )
+        print("[+] Files sent successfully!")
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except Exception as e:
-        print(f"[-] An error occurred: {e}")
-        exit(1)
+    main()
