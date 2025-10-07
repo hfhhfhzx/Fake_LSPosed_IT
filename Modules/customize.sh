@@ -26,12 +26,6 @@ if "$KSU" ; then
     ui_print "- Installing from KernelSU app"
     ui_print "- KernelSU version：$KSU_VER"
     ui_print "- KernelSU version code：$KSU_VER_CODE"
-
-elif $APATCH ; then
-    ui_print "- Installing from Apatch app"
-    ui_print "- Apatch version：$APATCH_VER"
-    ui_print "- Apatch version code：$APATCH_VER_CODE"
-
 else
     ui_print "- Installing from Magisk app"
     ui_print "- Magisk version：$MAGISK_VER"
